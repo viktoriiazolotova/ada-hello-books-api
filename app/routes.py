@@ -1,6 +1,6 @@
 from app import db
 from app.models.book import Book
-from flask import Blueprint, jsonify, make_response, request
+from flask import abort, Blueprint, jsonify, make_response, request
 
 books_bp = Blueprint("books", __name__, url_prefix="/books")
 
@@ -25,13 +25,27 @@ def get_all_books():
             "description": book.description})
     return jsonify(books_response)
 
-# @books_bp.route("/<book_id>", methods = ["GET"])
-# def handle_book(book_id):
-#     book = validate_book(book_id)
-#     print(book)
-#     return {"id": book.id,
-#         "title": book.title,
-#         "description": book.description}
+def validate_book(book_id):
+    #handle invalid book_id
+    try:
+        book_id = int(book_id)
+    except:
+        abort(make_response({"message": f"book {book_id} is invalid"}, 400))
+    #search for book_id in database, return book
+
+    book = Book.query.get(book_id) # return None if no book
+    
+    #return 404 for non-existing book
+    if not book:
+        abort(make_response({"message": f"book {book_id} is not found"}, 404))
+    return book
+
+@books_bp.route("/<book_id>", methods = ["GET"])
+def read_one_book(book_id):
+    book = validate_book(book_id)
+    return {"id": book.id,
+        "title": book.title,
+        "description": book.description}
 
     #Add route and function to get a single book endpoint
     #Add response to handle book in books/<book_id> route
