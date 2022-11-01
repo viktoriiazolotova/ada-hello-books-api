@@ -33,9 +33,18 @@ def create_book():
     return make_response(f"Book {new_book.title} successfully created", 201)
 
 @books_bp.route("", methods=["GET"])
-def get_all_books():
+def read_all_books():
+    title_query = request.args.get("title")
+
+    
+    if title_query:
+        books = Book.query.filter_by(title=title_query)
+    else:
+        books = Book.query.all()
+      
+    
     books_response = []
-    books = Book.query.all()
+    
     for book in books:
         books_response.append({
             "id": book.id,
@@ -56,11 +65,14 @@ def update_book(book_id):
     book = validate_book(book_id)
     
     request_body = request.get_json()
-    
-    book.title = request_body["title"]
-    book.description = request_body["description"]
+    try:
+        book.title = request_body["title"]
+        book.description = request_body["description"] ###### ask how to handle it
+    except KeyError:
+        return make_response(f"Book #{book_id} missing data", 200)
     db.session.commit()
     return make_response(f"Book #{book_id} successfully updated", 200)
+
 @books_bp.route("/<book_id>", methods = ["DELETE"])   
 def delete_book(book_id):
         book = validate_book(book_id)
