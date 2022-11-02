@@ -38,6 +38,7 @@ def read_all_books():
 
     
     if title_query:
+       # method query is inherits from db.Model in Books class
         books = Book.query.filter_by(title=title_query)
     else:
         books = Book.query.all()
@@ -65,11 +66,17 @@ def update_book(book_id):
     book = validate_book(book_id)
     
     request_body = request.get_json()
+    list_keys = ["title", "description"]
+    str_resp = ""
     try:
         book.title = request_body["title"]
         book.description = request_body["description"] ###### ask how to handle it
     except KeyError:
-        return make_response(f"Book #{book_id} missing data", 200)
+        for key in list_keys:
+            if key not in request_body:
+                str_resp += key + " "
+        
+        return make_response(f"Book #{book_id} missing {str_resp.strip()}", 200)
     db.session.commit()
     return make_response(f"Book #{book_id} successfully updated", 200)
 
