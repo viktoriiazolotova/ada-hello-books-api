@@ -5,3 +5,16 @@ class Book(db.Model):
     title = db.Column(db.String)
     description =db.Column(db.String)
     # __tablename__= "books"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description
+        }
+
+    @classmethod
+    def from_dict(cls, book_data):
+        new_book = Book(title = book_data["title"], 
+        description= book_data["description"])
+        return new_book

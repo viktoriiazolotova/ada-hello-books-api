@@ -5,32 +5,30 @@ from flask import abort, Blueprint, jsonify, make_response, request
 books_bp = Blueprint("books", __name__, url_prefix="/books")
 
 #helper functions
-def validate_book(book_id):
-    #handle invalid book_id
+def validate_model(cls, model_id):
+    #handle invalid model_id
     try:
-        book_id = int(book_id)
+        model_id = int(model_id)
     except:
-        abort(make_response({"message": f"book {book_id} is invalid"}, 400))
-    #search for book_id in database, return book
-
-    book = Book.query.get(book_id) # return None if no book
+        abort(make_response({"message": f"{cls.__name__} {model_id} invalid"}, 400))
+    #search for model_id in database, return model
+    model = cls.query.get(model_id) # return None if no model
     
-    #return 404 for non-existing book
-    if not book:
-        abort(make_response({"message": f"book {book_id} is not found"}, 404))
-    return book
-
+    #return 404 for non-existing model
+    if not model:
+        abort(make_response({"message": f"{cls.__name__} {model_id} not found"}, 404))
+    return model
 
 #route functions
+
 @books_bp.route("", methods=['POST'])
 def create_book():
     request_body = request.get_json()
-    new_book = Book(title=request_body["title"],
-                    description=request_body["description"])
+    new_book = Book.from_dict(request_body)
     db.session.add(new_book) # tell db to add data to db
     db.session.commit()    # to committ changes
 
-    return make_response(f"Book {new_book.title} successfully created", 201)
+    return make_response(jsonify(f"Book {new_book.title} successfully created"), 201)
 
 @books_bp.route("", methods=["GET"])
 def read_all_books():
@@ -42,28 +40,22 @@ def read_all_books():
         books = Book.query.filter_by(title=title_query)
     else:
         books = Book.query.all()
-      
     
     books_response = []
     
     for book in books:
-        books_response.append({
-            "id": book.id,
-            "title": book.title,
-            "description": book.description})
+        books_response.append(book.to_dict())
     return jsonify(books_response)
 
 
 @books_bp.route("/<book_id>", methods = ["GET"])
 def read_one_book(book_id):
-    book = validate_book(book_id)
-    return {"id": book.id,
-        "title": book.title,
-        "description": book.description}
+    book = validate_model(Book,book_id)
+    return book.to_dict()
 
 @books_bp.route("/<book_id>", methods = ["PUT"])
 def update_book(book_id):
-    book = validate_book(book_id)
+    book = validate_model(Book,book_id)
     
     request_body = request.get_json()
     list_keys = ["title", "description"]
@@ -78,15 +70,14 @@ def update_book(book_id):
         
         return make_response(f"Book #{book_id} missing {str_resp.strip()}", 200)
     db.session.commit()
-    return make_response(f"Book #{book_id} successfully updated", 200)
+    return make_response(jsonify(f"Book #{book_id} successfully updated"), 200)
 
 @books_bp.route("/<book_id>", methods = ["DELETE"])   
 def delete_book(book_id):
-        book = validate_book(book_id)
+        book = validate_model(Book, book_id)
         db.session.delete(book)
         db.session.commit()
-
-        return make_response(f"Book #{book_id} successfully deleted")
+        return make_response(jsonify(f"Book #{book_id} successfully deleted"), 200)
 
     
     
