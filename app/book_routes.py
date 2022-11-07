@@ -2,7 +2,7 @@ from app import db
 from app.models.book import Book
 from flask import abort, Blueprint, jsonify, make_response, request
 
-books_bp = Blueprint("books", __name__, url_prefix="/books")
+books_bp = Blueprint("books_bp", __name__, url_prefix="/books")
 
 #helper functions
 def validate_model(cls, model_id):
